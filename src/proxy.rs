@@ -22,7 +22,7 @@ pub async fn proxy_handler(
     let cache_endpoint = if params.is_empty() {
         endpoint.clone()
     } else {
-        let qs: Vec<String> = params.iter().map(|(k, v)| format!("{}={}", k, v)).collect();
+        let qs: Vec<String> = params.iter().map(|(k, v)| format!("{k}={v}")).collect();
         format!("{}?{}", endpoint, qs.join("&"))
     };
 
@@ -137,7 +137,7 @@ pub async fn proxy_handler(
                 tracing::info!("{}/{}: serving stale after fetch error", rooftop_id, endpoint);
                 return cached_response(&entry.body, &entry.content_type, "STALE", age);
             }
-            (StatusCode::BAD_GATEWAY, format!("Upstream fetch failed: {}", e)).into_response()
+            (StatusCode::BAD_GATEWAY, format!("Upstream fetch failed: {e}")).into_response()
         }
     }
 }

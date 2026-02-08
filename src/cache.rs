@@ -22,7 +22,7 @@ struct DiskCache {
 
 /// Cache key: (rooftop_id, endpoint_type) serialized as "rooftop_id:endpoint_type".
 fn cache_key(rooftop_id: &str, endpoint: &str) -> String {
-    format!("{}:{}", rooftop_id, endpoint)
+    format!("{rooftop_id}:{endpoint}")
 }
 
 /// In-memory + file-backed cache with TTL and rate limiting.
