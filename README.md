@@ -12,6 +12,8 @@ Responses include `X-Cache: HIT|MISS|STALE` and `X-Cache-Age` headers so you can
 
 Cache is persisted to disk and survives restarts.
 
+To force a fresh upstream fetch, send `Cache-Control: no-cache`. The rate limit still applies to prevent accidentally burning through the quota.
+
 ## Usage
 
 ```

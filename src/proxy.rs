@@ -26,12 +26,22 @@ pub async fn proxy_handler(
         format!("{}?{}", endpoint, qs.join("&"))
     };
 
-    // Check if cache is fresh
-    if state.cache.is_fresh(&rooftop_id, &cache_endpoint, state.ttl).await {
+    // Cache-Control: no-cache bypasses TTL (but not rate limit)
+    let force_refresh = headers
+        .get("Cache-Control")
+        .and_then(|v| v.to_str().ok())
+        .is_some_and(|v| v.contains("no-cache"));
+
+    // Check if cache is fresh (skipped on force refresh)
+    if !force_refresh && state.cache.is_fresh(&rooftop_id, &cache_endpoint, state.ttl).await {
         if let Some((entry, age)) = state.cache.get(&rooftop_id, &cache_endpoint).await {
             tracing::info!("{}/{}: HIT (age {}s)", rooftop_id, endpoint, age);
             return cached_response(&entry.body, &entry.content_type, "HIT", age);
         }
+    }
+
+    if force_refresh {
+        tracing::info!("{}/{}: cache bust requested", rooftop_id, endpoint);
     }
 
     // Cache is stale or missing — check rate limit
