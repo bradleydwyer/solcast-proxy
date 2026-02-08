@@ -1,0 +1,11 @@
+[Unit]
+Description=Solcast Caching Proxy
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/solcast-proxy --port 8888 --cache-dir /var/lib/solcast-proxy
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
