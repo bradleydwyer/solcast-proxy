@@ -83,10 +83,20 @@ impl ProxyCache {
     }
 
     /// Record that we attempted an upstream fetch (for rate limiting).
+    /// On success, use the full rate limit. On failure, allow retry after a short backoff.
     pub async fn mark_attempt(&self, rooftop_id: &str, endpoint: &str) {
         let key = cache_key(rooftop_id, endpoint);
         let mut attempts = self.last_attempt.write().await;
         attempts.insert(key, Instant::now());
+    }
+
+    /// Set a short backoff after upstream failure (allows retry much sooner than full rate limit).
+    pub async fn mark_failed_attempt(&self, rooftop_id: &str, endpoint: &str, rate_limit_secs: u64, backoff_secs: u64) {
+        let key = cache_key(rooftop_id, endpoint);
+        let mut attempts = self.last_attempt.write().await;
+        // Set timestamp so that `can_fetch` returns true after backoff_secs
+        let fake_past = Instant::now() - std::time::Duration::from_secs(rate_limit_secs.saturating_sub(backoff_secs));
+        attempts.insert(key, fake_past);
     }
 
     /// Store a response in cache and persist to disk.
