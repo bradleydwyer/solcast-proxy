@@ -12,7 +12,7 @@ Responses include `X-Cache: HIT|MISS|STALE` and `X-Cache-Age` headers so you can
 
 Cache is persisted to disk and survives restarts.
 
-To force a fresh upstream fetch, send `Cache-Control: no-cache`. The rate limit still applies to prevent accidentally burning through the quota.
+To force a fresh upstream fetch, send `Cache-Control: no-cache`. This bypasses both the TTL and rate limit — you're explicitly choosing to spend an API call.
 
 ## Usage
 

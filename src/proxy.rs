@@ -26,7 +26,7 @@ pub async fn proxy_handler(
         format!("{}?{}", endpoint, qs.join("&"))
     };
 
-    // Cache-Control: no-cache bypasses TTL (but not rate limit)
+    // Cache-Control: no-cache bypasses both TTL and rate limit
     let force_refresh = headers
         .get("Cache-Control")
         .and_then(|v| v.to_str().ok())
@@ -44,8 +44,8 @@ pub async fn proxy_handler(
         tracing::info!("{}/{}: cache bust requested", rooftop_id, endpoint);
     }
 
-    // Cache is stale or missing — check rate limit
-    if !state.cache.can_fetch(&rooftop_id, &cache_endpoint, state.rate_limit).await {
+    // Cache is stale or missing — check rate limit (skipped on force refresh)
+    if !force_refresh && !state.cache.can_fetch(&rooftop_id, &cache_endpoint, state.rate_limit).await {
         // Rate limited — serve stale if available
         if let Some((entry, age)) = state.cache.get(&rooftop_id, &cache_endpoint).await {
             tracing::info!("{}/{}: STALE (age {}s, rate limited)", rooftop_id, endpoint, age);
