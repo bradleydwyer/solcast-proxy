@@ -14,9 +14,15 @@ Cache is persisted to disk and survives restarts.
 
 To force a fresh upstream fetch, send `Cache-Control: no-cache`. This bypasses both the TTL and rate limit — you're explicitly choosing to spend an API call.
 
-## Usage
+## Installation
 
+**Homebrew (macOS):**
+```bash
+brew install bradleydwyer/tap/solcast-proxy
 ```
+
+**From source:**
+```bash
 cargo build --release
 ./target/release/solcast-proxy
 ```
