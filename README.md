@@ -2,32 +2,33 @@
 
 Caching reverse proxy for the [Solcast](https://solcast.com/) solar forecast API.
 
-Solcast's free tier allows 10 API calls/day. If you're running multiple clients (e.g. two instances of a solar monitoring app), they each burn through the quota independently. This proxy sits in between and serves cached responses so only one set of upstream calls is made regardless of how many clients are hitting it.
+Solcast's free tier allows 10 API calls/day. If you run multiple clients (e.g. two solar monitoring apps), each one burns through the quota independently. This proxy sits in between and caches responses so only one set of upstream calls is made, regardless of how many clients hit it.
 
-## How it works
+## Install
 
-Point your Solcast clients at the proxy instead of `api.solcast.com.au`. The proxy forwards requests upstream, caches the full response body, and serves it back on subsequent requests. Auth is pass-through — clients send their own Bearer token and the proxy forwards it.
-
-Responses include `X-Cache: HIT|MISS|STALE` and `X-Cache-Age` headers so you can see what's happening.
-
-Cache is persisted to disk and survives restarts.
-
-To force a fresh upstream fetch, send `Cache-Control: no-cache`. This bypasses both the TTL and rate limit — you're explicitly choosing to spend an API call.
-
-## Installation
-
-**Homebrew (macOS):**
 ```bash
 brew install bradleydwyer/tap/solcast-proxy
 ```
 
-**From source:**
+Or from source:
+
 ```bash
 cargo build --release
 ./target/release/solcast-proxy
 ```
 
-Options:
+## Usage
+
+Point your Solcast clients at the proxy instead of `api.solcast.com.au`:
+
+```bash
+solcast-proxy                     # starts on port 8888
+
+curl -H "Authorization: Bearer YOUR_KEY" \
+  http://localhost:8888/rooftop_sites/YOUR_SITE_ID/forecasts
+```
+
+### Options
 
 ```
 -p, --port <PORT>         Listen port [default: 8888]
@@ -36,12 +37,15 @@ Options:
 --rate-limit <SECS>       Min seconds between upstream calls per endpoint [default: 9000]
 ```
 
-Then point your client at `http://localhost:8888` instead of `https://api.solcast.com.au`:
+## How it works
 
-```
-curl -H "Authorization: Bearer YOUR_KEY" \
-  http://localhost:8888/rooftop_sites/YOUR_SITE_ID/forecasts
-```
+The proxy forwards requests upstream, caches the response body, and serves it back on later requests. Auth is pass-through: clients send their own Bearer token and the proxy forwards it.
+
+Responses include `X-Cache: HIT|MISS|STALE` and `X-Cache-Age` headers so you can tell what happened.
+
+Cache is persisted to disk and survives restarts.
+
+Send `Cache-Control: no-cache` to force a fresh upstream fetch. This bypasses the TTL and rate limit.
 
 ## Deploying as a service
 
