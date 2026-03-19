@@ -14,7 +14,10 @@ use tokio::time::Instant;
 use cache::ProxyCache;
 
 #[derive(Parser)]
-#[command(name = "solcast-proxy", about = "Caching reverse proxy for Solcast API")]
+#[command(
+    name = "solcast-proxy",
+    about = "Caching reverse proxy for Solcast API"
+)]
 struct Cli {
     /// Listen port
     #[arg(short, long, default_value = "8888")]
@@ -61,13 +64,15 @@ async fn health(State(state): State<Arc<AppState>>) -> Json<HealthResponse> {
 async fn main() {
     let cli = Cli::parse();
 
-    tracing_subscriber::fmt()
-        .with_target(false)
-        .init();
+    tracing_subscriber::fmt().with_target(false).init();
 
     // Ensure cache directory exists
     if let Err(e) = std::fs::create_dir_all(&cli.cache_dir) {
-        tracing::error!("Failed to create cache dir {}: {}", cli.cache_dir.display(), e);
+        tracing::error!(
+            "Failed to create cache dir {}: {}",
+            cli.cache_dir.display(),
+            e
+        );
         std::process::exit(1);
     }
 
@@ -81,7 +86,10 @@ async fn main() {
     });
 
     let app = Router::new()
-        .route("/rooftop_sites/{rooftop_id}/{endpoint}", get(proxy::proxy_handler))
+        .route(
+            "/rooftop_sites/{rooftop_id}/{endpoint}",
+            get(proxy::proxy_handler),
+        )
         .route("/health", get(health))
         .with_state(state);
 

@@ -91,11 +91,18 @@ impl ProxyCache {
     }
 
     /// Set a short backoff after upstream failure (allows retry much sooner than full rate limit).
-    pub async fn mark_failed_attempt(&self, rooftop_id: &str, endpoint: &str, rate_limit_secs: u64, backoff_secs: u64) {
+    pub async fn mark_failed_attempt(
+        &self,
+        rooftop_id: &str,
+        endpoint: &str,
+        rate_limit_secs: u64,
+        backoff_secs: u64,
+    ) {
         let key = cache_key(rooftop_id, endpoint);
         let mut attempts = self.last_attempt.write().await;
         // Set timestamp so that `can_fetch` returns true after backoff_secs
-        let fake_past = Instant::now() - std::time::Duration::from_secs(rate_limit_secs.saturating_sub(backoff_secs));
+        let fake_past = Instant::now()
+            - std::time::Duration::from_secs(rate_limit_secs.saturating_sub(backoff_secs));
         attempts.insert(key, fake_past);
     }
 
@@ -132,7 +139,11 @@ impl ProxyCache {
             }
         };
         if let Err(e) = tokio::fs::write(&self.cache_path, json).await {
-            tracing::error!("Failed to write cache to {}: {}", self.cache_path.display(), e);
+            tracing::error!(
+                "Failed to write cache to {}: {}",
+                self.cache_path.display(),
+                e
+            );
         } else {
             tracing::debug!("Cache saved to {}", self.cache_path.display());
         }
@@ -160,7 +171,9 @@ mod tests {
         assert!(!cache.is_fresh("site1", "forecasts", 7200).await);
 
         // Insert
-        cache.set("site1", "forecasts", "{}".into(), "application/json".into()).await;
+        cache
+            .set("site1", "forecasts", "{}".into(), "application/json".into())
+            .await;
 
         // Now fresh
         assert!(cache.is_fresh("site1", "forecasts", 7200).await);
@@ -192,7 +205,14 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let cache = ProxyCache::new(dir.path());
 
-        cache.set("site1", "forecasts", "{\"f\":1}".into(), "application/json".into()).await;
+        cache
+            .set(
+                "site1",
+                "forecasts",
+                "{\"f\":1}".into(),
+                "application/json".into(),
+            )
+            .await;
 
         assert!(cache.is_fresh("site1", "forecasts", 7200).await);
         assert!(!cache.is_fresh("site1", "estimated_actuals", 7200).await);
@@ -205,7 +225,14 @@ mod tests {
         // Write to cache
         {
             let cache = ProxyCache::new(dir.path());
-            cache.set("site1", "forecasts", "{\"data\":true}".into(), "application/json".into()).await;
+            cache
+                .set(
+                    "site1",
+                    "forecasts",
+                    "{\"data\":true}".into(),
+                    "application/json".into(),
+                )
+                .await;
             assert_eq!(cache.entry_count().await, 1);
         }
 
